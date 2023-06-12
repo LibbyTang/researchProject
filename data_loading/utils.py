@@ -16,7 +16,7 @@ from scipy.interpolate import interp1d
 csv_path = "../preprocess/audio/successful_train_samples/"
 
 # csv file path for successful testing dataset.
-test_csv_path = "../preprocess/audio/successful_test_samples/"
+test_csv_path_successful = "../preprocess/audio/successful_test_samples/"
 
 # csv file of all_unsuccessful unsucessful testing samples including both start and continue category.
 test_csv_path_unsuccessful = "../preprocess/audio/unsuccessful_intention_test_sample/"
@@ -27,16 +27,14 @@ test_csv_path_all_sample = "../preprocess/audio/all_sample/"
 # txt output file of customized check
 txt_path = "../preprocess/audio/output_file/"
 
-
-
-balloon_pop_1_video_frame = 23030 # to
-balloon_pop_1_accel_frame = 45977 + 19/34
+balloon_pop_1_video_frame = 23030  # to
+balloon_pop_1_accel_frame = 45977 + 19 / 34
 
 balloon_pop_2_video_frame = 74844
-balloon_pop_2_accel_frame = 47706 + 23/28
+balloon_pop_2_accel_frame = 47706 + 23 / 28
 
 balloon_pop_3_video_frame = 166836.5
-balloon_pop_3_accel_frame = 50776 + 30.5/32
+balloon_pop_3_accel_frame = 50776 + 30.5 / 32
 
 
 def reset_examples_ids(examples):
@@ -50,7 +48,9 @@ Generate information for example.pkl file
 
 
 class Maker():
-    def __init__(self, accel_path=None, vad_path=None, unsuccessful_vad_path=None, all_sample_path=None):
+    def __init__(self, tracks_path=None, accel_path=None, vad_path=None, unsuccessful_vad_path=None,
+                 all_sample_path=None):
+        self.tracks = pickle.load(open(tracks_path, "rb"))
 
         self.accel = {}
         if accel_path is not None:
@@ -100,9 +100,9 @@ class Maker():
             print('load_unsuccessful_vad called but nothing loaded.')
 
     def _interp_vad(self, vad, in_fs, out_fs):
-        t = np.arange(0, len(vad) / in_fs, 1/in_fs)
+        t = np.arange(0, len(vad) / in_fs, 1 / in_fs)
         f = interp1d(t, vad, kind='nearest')
-        tnew = np.arange(0, len(vad) / in_fs, 1/out_fs)
+        tnew = np.arange(0, len(vad) / in_fs, 1 / out_fs)
         return f(tnew)
 
     def load_all_vad(self, all_vad):
@@ -148,26 +148,64 @@ class Maker():
 
         # loop over participants
         for i in valid_list:
+            # generate example of successful intention case:
+            examples_participant, example_id = self.make_examples(i, example_id,
+                                                                  csv_path + str(windowSize) + "s/" + '_' + str(
+                                                                      i) + ".csv", feature_fs,
+                                                                  self._get_vad)
 
-            #print("pid : ", i)
+            examples.append(examples_participant)
 
-            time_window_list = []
-            # read train participant csv
-            # generate training dataset time window of successful intention case
-            with open(csv_path + str(windowSize) + "s/" + '_' + str(i) + ".csv") as infile:
-                reader = csv.reader(infile)
+        examples = [item for sublist in examples for item in sublist]
+        self.examples = examples
+        print(len(examples))
 
-                for line in reader:
-                    if line:
-                        time_window_list.append(tuple([int(line[0]), int(line[1])]))
+        return examples
 
-            # create dict for successful intention training dataset.
-            for j in range(0, len(time_window_list)):
-                ini_time = time_window_list[j][0]
-                end_time = time_window_list[j][1]
+    # General template for making examples for a participant
+    # (i indicate the pid for the current participant)
+    def make_examples(self, i, example_id, csv_file, feature_fs, vad_function):
+        examples = []
+        time_window_list = []
 
-                temp_vad = self._get_vad(i, ini_time, end_time, 100)
-                interp_vad = self._interp_vad(temp_vad, 100, feature_fs)
+        with open(csv_file) as infile:
+            reader = csv.reader(infile)
+
+            for line in reader:
+                if line:
+                    # Add the time segment (as second) sample of the participant
+                    time_window_list.append(tuple([int(line[0]), int(line[1])]))
+
+        participant_track = {}
+
+        # Iterate through all the tracks, find the track that belongs to the current participant
+        for _, track in enumerate(self.tracks):
+            if i == track['pid']:
+                participant_track = track
+                # TODO Warning: There is situation where multiple tracks belong to the same person.
+                #  Currently only the first one will be considered.
+                break
+
+        for j in range(0, len(time_window_list)):
+            ini_time = time_window_list[j][0]
+            end_time = time_window_list[j][1]
+
+            vad = vad_function(i, ini_time, end_time, 100)
+            interp_vad = self._interp_vad(vad, 100, feature_fs)
+
+            int_frame = ini_time * feature_fs
+            end_frame = end_time * feature_fs
+
+            if participant_track == {}:
+                continue
+
+            # Check if the time interval has poses, if one endpoint is out of bound, discard this sample.
+            ini = participant_track['ini']
+            poses = participant_track['poses']
+
+            if (int_frame > ini) and (end_frame < ini + len(poses)):
+                # Extract the corresponding pose segements from the given time segment
+                poses_segment = poses[ini_time * feature_fs - ini + 1: end_time * feature_fs - ini + 1, :]
 
 
                 examples.append({
@@ -176,13 +214,12 @@ class Maker():
                     'ini_time': ini_time,
                     'end_time': end_time,
                     # data
+                    'poses': poses_segment,
                     'vad': interp_vad
                 })
                 example_id += 1
 
-        self.examples = examples
-
-        return examples
+        return examples, example_id
 
     def make_test_examples(self, index_s, windowSize, feature_fs):
         test_examples = list()
@@ -192,39 +229,16 @@ class Maker():
 
         # loop over participants
         for i in valid_list:
+            # generate example of successful intention case:
+            examples_participant, test_example_id = self.make_examples(i, test_example_id, test_csv_path_successful
+                                                                       + str(windowSize) + "s/" + str(index_s)
+                                                                       + '_' + str(i) + ".csv", feature_fs,
+                                                                       self._get_vad)
+            test_examples.append(examples_participant)
 
-
-            # generate test dataset time window of successful intention case:
-            test_time_window_list = []
-            with open(test_csv_path +  str(windowSize) + "s/" + str(index_s) + '_' + str(i) + ".csv") as infile:
-                test_reader = csv.reader(infile)
-
-                for test_line in test_reader:
-                    if test_line:
-                        test_time_window_list.append(tuple([int(test_line[0]), int(test_line[1])]))
-
-            # create dict for successful intention testing dataset.
-            for j in range(0, len(test_time_window_list)):
-
-                test_ini_time = test_time_window_list[j][0]
-                test_end_time = test_time_window_list[j][1]
-
-                test_temp_vad = self._get_vad(i, test_ini_time, test_end_time, 100)
-
-                interp_vad = self._interp_vad(test_temp_vad, 100, feature_fs)
-
-
-                test_examples.append({
-                    'id': test_example_id,
-                    'pid': i,
-                    'ini_time': test_ini_time,
-                    'end_time': test_end_time,
-                    # data
-                    'vad': interp_vad
-                })
-                test_example_id += 1
-
+        test_examples = [item for sublist in test_examples for item in sublist]
         self.test_examples = test_examples
+        print(len(test_examples))
 
         return test_examples
 
@@ -237,43 +251,19 @@ class Maker():
         examples = list()
         example_id = 0
         valid_list = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]
-
         for i in valid_list:
-            all_test_time_window_list = []
+            examples_participant, example_id = self.make_examples(i, example_id, test_csv_path_all_sample
+                                                                  + str(windowSize) + "s/" + str(index_s) + '_' + str(i)
+                                                                  + ".csv", feature_fs, self._get_all_vad)
+            examples.append(examples_participant)
 
-            with open(test_csv_path_all_sample +  str(windowSize) + "s/" + str(index_s) + '_' + str(i) + ".csv") as infile:
-                all_reader = csv.reader(infile)
+        examples = [item for sublist in examples for item in sublist]
+        self.all_samples = examples
+        print(len(examples))
 
-                for all_sample_line in all_reader:
-                    if all_sample_line:
-                        all_test_time_window_list.append(tuple([int(all_sample_line[0]),
-                                                                int(all_sample_line[1])]))
-
-            for j in range(0, len(all_test_time_window_list)):
-                all_ini_time = all_test_time_window_list[j][0]
-                all_end_time = all_test_time_window_list[j][1]
-
-                all_vad = self._get_all_vad(i, all_ini_time, all_end_time, 100)
-
-                interp_vad = self._interp_vad(all_vad, 100, feature_fs)
-
-
-
-                examples.append({
-                    'id': example_id,
-                    'pid': i,
-                    'ini_time': all_ini_time,
-                    'end_time': all_end_time,
-                    # data
-                    'vad': interp_vad
-                })
-
-                example_id += 1
-
-        self.examples = examples
         return examples
 
-    def make_unsuccessful_examples(self, unsuccessful_pid, index_s, windowSize, feature_fs, category:str):
+    def make_unsuccessful_examples(self, unsuccessful_pid, index_s, windowSize, feature_fs, category: str):
         """
         :param unsuccessful_pid: pid number
         :param index_s: the number of experiment
@@ -283,40 +273,20 @@ class Maker():
         example_id = 0
         valid_list = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]
         for i in valid_list:
-            all_test_time_window_list = []
 
-            if unsuccessful_pid.__contains__(i):
+            if not unsuccessful_pid.__contains__(i):
+                continue
 
-                with open(test_csv_path_unsuccessful + category + "/" + str(windowSize) +"s/" + str(index_s) + '_' + str(i) + ".csv") as infile:
-                    all_reader = csv.reader(infile)
+            examples_participant, example_id = self.make_examples(i, example_id, test_csv_path_unsuccessful + category
+                                                                  + "/" + str(windowSize) + "s/"
+                                                                  + str(index_s) + '_' + str(i) + ".csv", feature_fs,
+                                                                  self._get_unsuccessful_vad)
+            examples.append(examples_participant)
 
-                    for unsuccessful_line in all_reader:
-                        if unsuccessful_line:
-                            all_test_time_window_list.append(tuple([int(unsuccessful_line[0]),
-                                                                    int(unsuccessful_line[1])]))
+        examples = [item for sublist in examples for item in sublist]
+        self.unsuccessful_examples = examples
+        print(len(examples))
 
-                for j in range(0, len(all_test_time_window_list)):
-
-                    all_ini_time = all_test_time_window_list[j][0]
-                    all_end_time = all_test_time_window_list[j][1]
-
-                    unsuccessful_temp_vad = self._get_unsuccessful_vad(i, all_ini_time, all_end_time, 100)
-
-                    interp_vad = self._interp_vad(unsuccessful_temp_vad, 100, feature_fs)
-
-
-                    examples.append({
-                        'id': example_id,
-                        'pid': i,
-                        'ini_time': all_ini_time,
-                        'end_time': all_end_time,
-                        # data
-                        'vad': interp_vad
-                    })
-
-                    example_id += 1
-
-        self.examples = examples
         return examples
 
     def filter_examples_by_movement_threshold(self, ts=20):
@@ -335,8 +305,8 @@ class Maker():
 
 video_seconds_to_accel_sample = interp1d(
     [
-        balloon_pop_1_video_frame/29.97,
-        balloon_pop_3_video_frame/29.97
+        balloon_pop_1_video_frame / 29.97,
+        balloon_pop_3_video_frame / 29.97
     ], [
         balloon_pop_1_accel_frame,
         balloon_pop_3_accel_frame
