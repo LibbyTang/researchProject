@@ -95,13 +95,13 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
                                                                         weights_path=weights_path)
             model = trainer.model
 
-            torch.save(model.state_dict(), "model_temp.pt")
+            torch.save(model.state_dict(), "model_temp_cam2_4.pt")
 
         else:
 
 
             model = System('accel', 'classification')
-            model.load_state_dict(torch.load("model_temp.pt"))
+            model.load_state_dict(torch.load("model_temp_cam2_4.pt"))
 
         # select the best model
 
@@ -209,8 +209,8 @@ def get_table(index_i, Num, windowSize, do_train=True, deterministic=True):
 
     all_input_modalities = [
         # ('video',),
-        # ('pose',),
-        ('accel',),
+        ('poses',),
+        #('accel',),
     ]
 
     res = {}
@@ -272,7 +272,7 @@ def main(train, experiment_num, windowSize, numberOfExperiment):
 
 if __name__ == '__main__':
     #train model
-    main(True, experiment_num=0, windowSize=1, numberOfExperiment=100)
+    main(True, experiment_num=0, windowSize=4, numberOfExperiment=100)
 
     # experiment 1 done
     #main(False, experiment_num=1, windowSize=1, numberOfExperiment=100)

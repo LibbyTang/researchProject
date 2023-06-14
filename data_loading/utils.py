@@ -207,14 +207,13 @@ class Maker():
                 # Extract the corresponding pose segements from the given time segment
                 poses_segment = poses[ini_time * feature_fs - ini + 1: end_time * feature_fs - ini + 1, :]
 
-
                 examples.append({
                     'id': example_id,
                     'pid': i,
                     'ini_time': ini_time,
                     'end_time': end_time,
                     # data
-                    'poses': poses_segment,
+                    'poses': poses_segment.transpose().astype(np.float32),
                     'vad': interp_vad
                 })
                 example_id += 1

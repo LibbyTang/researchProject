@@ -5,6 +5,8 @@ import utils
 
 accel_path = "../data/subj_accel_interp.pkl"
 pose_path = "../data/cam2_final.pkl"
+# pose_path = "../data/cam3_final.pkl"
+
 
 def make_all_examples(Num, windowSize, feature_fs, numberOfExperiment=None, category=None):
     accel_path = "../data/subj_accel_interp.pkl"
@@ -73,19 +75,19 @@ if __name__ == '__main__':
         make_all_examples(0, window_size, feature_fs=30)
 
         # experiment 1
-        make_all_examples(1, window_size, feature_fs=30, numberOfExperiment=1)
+        make_all_examples(1, window_size, feature_fs=30, numberOfExperiment=100)
 
         # experiment 2  done
-        make_all_examples(2, window_size, feature_fs=30, numberOfExperiment=1)
+        make_all_examples(2, window_size, feature_fs=30, numberOfExperiment=100)
 
         # experiment 3
-        make_all_examples(3, window_size, feature_fs=30, numberOfExperiment=1, category='all_unsuccessful')
+        make_all_examples(3, window_size, feature_fs=30, numberOfExperiment=100, category='all_unsuccessful')
 
         # experiment 4
-        make_all_examples(4, window_size, feature_fs=30, numberOfExperiment=1, category='start')
+        make_all_examples(4, window_size, feature_fs=30, numberOfExperiment=100, category='start')
 
         # experiment 5
-        make_all_examples(5, window_size, feature_fs=30, numberOfExperiment=1, category='continue')
+        make_all_examples(5, window_size, feature_fs=30, numberOfExperiment=100, category='continue')
 
 
 

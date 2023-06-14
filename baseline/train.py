@@ -19,7 +19,7 @@ class System(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.model = SegmentationFusionModel(modalities, mask_len=20)
+        self.model = SegmentationFusionModel(modalities, mask_len=120)
         self.loss_fn = {
             'classification':F.binary_cross_entropy_with_logits,
             'regression': F.mse_loss,
@@ -111,17 +111,18 @@ def train(i, train_ds, val_ds, modalities,
         deterministic=False, eval_every_epoch=False, weights_path=None):
 
     num_epochs = {
-        ('audio',): 10,
-        ('accel',): 10,
-        ('video',): 15,
-        ('audio', 'video', 'accel'): 15
+        #('audio',): 10,
+        #('accel',): 10,
+        #('video',): 15,
+        #('audio', 'video', 'accel'): 15,
+        ('poses', ): 10,
     }
 
 
 
 
     # data loaders
-    batch_size = 32
+    batch_size = 131
 
     g = torch.Generator()
     g.manual_seed(729387+i)
@@ -135,7 +136,7 @@ def train(i, train_ds, val_ds, modalities,
         sampler=BatchSampler(
             RandomSampler(train_ds, generator=g), batch_size=batch_size, drop_last=False
         ),
-        num_workers=8,
+        num_workers=1,
         generator=g,
         collate_fn=_collate_fn
     )
@@ -160,7 +161,7 @@ def train(i, train_ds, val_ds, modalities,
         sampler=BatchSampler(
             SequentialSampler(val_ds), batch_size=batch_size, drop_last=False
         ),
-        num_workers=8,
+        num_workers=1,
         generator=g,
         collate_fn=_collate_fn
     )
@@ -186,8 +187,7 @@ def train(i, train_ds, val_ds, modalities,
     return trainer, trainer.model.training_loss
 
 def test(i, model, test_ds, prefix=None):
-
-    batch_size=32
+    batch_size=131
     # data loaders
     g = torch.Generator()
     g.manual_seed(897689769+i)
