@@ -123,6 +123,9 @@ def train(i, train_ds, val_ds, modalities,
 
     # data loaders
     batch_size = 131
+    # batch_size = 32
+    if len(train_ds) % batch_size == 1:
+        batch_size += 1
 
     g = torch.Generator()
     g.manual_seed(729387+i)

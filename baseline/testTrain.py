@@ -100,7 +100,7 @@ def do_cross_validation(do_train, ds, last_test_ds, input_modalities, seed, pref
         else:
 
 
-            model = System('accel', 'classification')
+            model = System('poses', 'classification')
             model.load_state_dict(torch.load("model_temp_cam2_4.pt"))
 
         # select the best model
