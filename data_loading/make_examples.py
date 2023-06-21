@@ -4,8 +4,8 @@ import pickle
 import utils
 
 accel_path = "../data/subj_accel_interp.pkl"
-pose_path = "../data/cam2_final.pkl"
-# pose_path = "../data/cam3_final.pkl"
+# pose_path = "../data/cam2_final.pkl"
+pose_path = "../data/cam3_final.pkl"
 
 
 def make_all_examples(Num, windowSize, feature_fs, numberOfExperiment=None, category=None):
@@ -21,8 +21,8 @@ def make_all_examples(Num, windowSize, feature_fs, numberOfExperiment=None, cate
     # Both start and continue unsuccessful intention ground truth label.
     all_intention_label_path = "../preprocess/audio/all_label/"
 
-    start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
-
+    # start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
+    start_pid = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]
 
     if Num == 1:
         temp = all_intention_label_path + str(windowSize) + "s/"

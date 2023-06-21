@@ -91,7 +91,8 @@ class Maker():
             print('load_vad called but nothing loaded.')
 
     def load_unsuccessful_vad(self, unsuccessful_vad):
-        start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
+        # start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
+        start_pid = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]
         for i in start_pid:
             fpath = os.path.join(unsuccessful_vad, f'{i}.csv')
             self.unsuccessful_vad[i] = pd.read_csv(fpath, header=None).to_numpy()
@@ -176,17 +177,19 @@ class Maker():
                     # Add the time segment (as second) sample of the participant
                     time_window_list.append(tuple([int(line[0]), int(line[1])]))
 
-        participant_track = {}
+        track_list = []
 
         # Iterate through all the tracks, find the track that belongs to the current participant
         for _, track in enumerate(self.tracks):
             if i == track['pid']:
-                participant_track = track
-                # TODO Warning: There is situation where multiple tracks belong to the same person.
-                #  Currently only the first one will be considered.
+                track_list.append(track)
+
+        # Iterate through all the time segment samples
+        for j in range(0, len(time_window_list)):
+            # The participant does not have a track in the current camera
+            if not track_list:
                 break
 
-        for j in range(0, len(time_window_list)):
             ini_time = time_window_list[j][0]
             end_time = time_window_list[j][1]
 
@@ -196,27 +199,42 @@ class Maker():
             int_frame = ini_time * feature_fs
             end_frame = end_time * feature_fs
 
-            if participant_track == {}:
-                continue
+            # Iterate through all the tracks of the participant to find the one with the correct time period.
+            for participant_track in track_list:
 
-            # Check if the time interval has poses, if one endpoint is out of bound, discard this sample.
-            ini = participant_track['ini']
-            poses = participant_track['poses']
+                # Check if the time interval has poses, if one endpoint is out of bound, discard this sample.
+                ini = participant_track['ini']
+                poses = participant_track['poses']
 
-            if (int_frame > ini) and (end_frame < ini + len(poses)):
-                # Extract the corresponding pose segements from the given time segment
-                poses_segment = poses[ini_time * feature_fs - ini + 1: end_time * feature_fs - ini + 1, :]
+                # if (np.count_nonzero(interp_vad == 1) > 0):
+                #     print("pid:", i)
+                #     print("Pose time period:")
+                #     print(ini)
+                #     print(ini + len(poses))
+                #     print("-----")
+                #     print("Annotation time segment:")
+                #     print(int_frame)
+                #     print(end_frame)
+                #     print("===")
 
-                examples.append({
-                    'id': example_id,
-                    'pid': i,
-                    'ini_time': ini_time,
-                    'end_time': end_time,
-                    # data
-                    'poses': poses_segment.transpose().astype(np.float32),
-                    'vad': interp_vad
-                })
-                example_id += 1
+                if (int_frame > ini) and (end_frame < ini + len(poses)):
+                    # Extract the corresponding pose segements from the given time segment
+                    poses_segment = poses[ini_time * feature_fs - ini + 1: end_time * feature_fs - ini + 1, :]
+
+                    # Only get x and y of the poses
+                    poses_segment_26 = np.array([[x for i, x in enumerate(sublist) if (i + 1) % 3 != 0] for sublist in
+                                        poses_segment])
+
+                    examples.append({
+                        'id': example_id,
+                        'pid': i,
+                        'ini_time': ini_time,
+                        'end_time': end_time,
+                        # data
+                        'poses': poses_segment_26.transpose().astype(np.float32),
+                        'vad': interp_vad
+                    })
+                    example_id += 1
 
         return examples, example_id
 

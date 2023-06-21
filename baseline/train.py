@@ -187,7 +187,9 @@ def train(i, train_ds, val_ds, modalities,
     return trainer, trainer.model.training_loss
 
 def test(i, model, test_ds, prefix=None):
-    batch_size=131
+    batch_size = 32
+    if len(test_ds) % batch_size == 1:
+        batch_size += 1
     # data loaders
     g = torch.Generator()
     g.manual_seed(897689769+i)
