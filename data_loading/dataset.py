@@ -57,6 +57,7 @@ class FatherDataset(torch.utils.data.Dataset):
         # for ex in examples:
         #     print("shape: ", ex['vad'].shape, "  ", ex['vad'])
 
+        items['poses'] = np.stack([ex['poses'] for ex in examples])
         items['label'] = np.stack([ex['vad'] for ex in examples])
         #print(items['label'], "     waff")
 
@@ -72,9 +73,9 @@ class FatherDataset(torch.utils.data.Dataset):
         for ex_name, extractor in self.extractors.items():
             item[ex_name] = extractor(*key)
 
-        # item['poses'] = ex['poses']
         # item['label'] = np.mean(ex['vad']) >= self.label_threshold
         # item['label'] = ex['interp_vad']
+        item['poses'] = ex['poses']
         item['label'] = ex['vad']
         item['index'] = idx
 

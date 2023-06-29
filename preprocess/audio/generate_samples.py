@@ -19,7 +19,9 @@ vad_path = 'filter_vad/'
 
 # global variable
 pid_list = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]  # len = 13
+# start_pid = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]
 start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
+
 train_speech_total = 0
 train_silence_total = 0
 test_speech_total = 0
@@ -82,36 +84,63 @@ main_speakers = {
 Manually labeled data
 time frame of unrealized intention
 """
-unsuccessful_intention = [(2, 386160, 388520, 'INTS_start'), (3, 202950, 204750, 'INTS_start'),
-                          (3, 208510, 211840, 'INTS_start'),
-                          (3, 371673, 372980, 'INTS_continue'), (4, 42000, 46320, 'INTS_continue'),
-                          (4, 111633, 115986, 'INTS_start'),
-                          (4, 127933, 129653, 'INTS_start'), (4, 175846, 178086, 'INTS_continue'),
-                          (4, 250906, 254353, 'INTS_continue'),
-                          (4, 263833, 267353, 'INTS_continue'), (4, 284286, 286060, 'INTS_continue'),
-                          (4, 295220, 298173, 'INTS_continue'),
-                          (4, 310566, 311986, 'INTS_continue'), (4, 428740, 429906, 'INTS_start'),
-                          (4, 454213, 456400, 'INTS_start'),
-                          (4, 461800, 464920, 'INTS_start'), (7, 260780, 261773, 'INTS_maybe'),
-                          (7, 573726, 576053, 'INTS_start'),
-                          (10, 298766, 302260, 'INTS_continue'), (10, 327113, 327926, 'INTS_start'),
-                          (11, 200620, 202100, 'INTS_start'),
-                          (11, 265993, 268886, 'INTS_continue'), (11, 453580, 455440, 'INTS_continue'),
-                          (11, 504746, 506253, 'INTS_start'),
-                          (11, 569646, 572020, 'INTS_start'), (11, 584906, 586813, 'INTS_continue'),
-                          (17, 126940, 128820, 'INTS_start'),
-                          (17, 419506, 421513, 'INTS_maybe'), (17, 447546, 451213, 'INTS_continue'),
-                          (22, 270433, 272220, 'INTS_continue'),
-                          (22, 320566, 321906, 'INTS_continue'), (22, 356313, 358780, 'INTS_start'),
-                          (22, 532260, 534773, 'INTS_continue'),
-                          (22, 555600, 556740, 'INTS_start'), (23, 371340, 374440, 'INTS_start'),
-                          (27, 169253, 170973, 'INTS_continue'),
-                          (27, 260046, 262333, 'INTS_maybe'), (34, 423106, 424286, 'INTS_start'),
-                          (34, 425030, 426220, 'INTS_start'),
-                          (34, 431330, 432480, 'INTS_start'), (34, 439420, 440633, 'INTS_start'),
-                          (34, 477426, 479106, 'INTS_start'),
-                          (34, 513746, 515126, 'INTS_continue'), (35, 378093, 379920, 'INTS_continue'),
-                          (5, 412920, 414420, 'INTS_maybe')]
+unsuccessful_intention = [(2, 385570, 387670, 'INTS_start'), (2, 326840, 328570, 'INTS_continue'),
+                            (3, 139500, 141950, 'INTS_continue'), (3, 371950, 374520, 'INTS_continue'), (4, 127110, 129170, 'INTS_start'),
+                            (4, 44860, 47690, 'INTS_continue'), (4, 192490, 194400, 'INTS_start'),
+                            (4, 428950, 431620, 'INTS_start'), (4, 454360, 456800, 'INTS_start'),
+                            (4, 461680, 464710, 'INTS_start'), (4, 112740, 115090, 'INTS_start'),
+                            (4, 196910, 198870, 'INTS_start'), (4, 266310, 267900, 'INTS_continue'),
+                            (4, 284290, 286930, 'INTS_continue'), (4, 297150, 298820, 'INTS_start'),
+                            (4, 310960, 312890, 'INTS_continue'), (5, 397280, 400500, 'INTS_continue'),
+                            (5, 245770, 248370, 'INTS_start'), (5, 412940, 414980, 'INTS_start'),
+                            (7, 317660, 319900, 'INTS_continue'), (7, 570090, 574000, 'INTS_start'),
+                            (10, 265920, 267680, 'INTS_continue'), (10, 268070, 270040, 'INTS_continue'),
+                            (10, 299760, 301570, 'INTS_continue'), (10, 322010, 323890, 'INTS_start'),
+                            (10, 506090, 507620, 'INTS_continue'), (11, 35322, 36322, 'INTS_start'),
+                            (11, 569646, 572020, 'INTS_start'), (11, 50231, 51231, 'INTS_start'), (11, 52129, 53129, 'INTS_start'),
+                            (11, 284610, 285610, 'INTS_continue'), (11, 504946, 505946, 'INTS_start'),
+                            (17, 127110, 128590, 'INTS_continue'), (17, 234790, 236770, 'INTS_continue'),
+                            (17, 586720, 588630, 'INTS_start'), (22, 319730, 322010, 'INTS_start'),
+                            (22, 245900, 248380, 'INTS_start'), (22, 355920, 359270, 'INTS_start'),
+                            (22, 531540, 536200, 'INTS_continue'), (22, 555410, 557510, 'INTS_start'),
+                            (23, 543100, 545700, 'INTS_continue'),
+                            (27, 472000, 476363, 'INTS_start'), (27, 35363, 38454, 'INTS_continue'),
+                            (27, 44909, 48909, 'INTS_start'), (27, 86181, 88090, 'INTS_continue'),
+                            (34, 426545, 432090, 'INTS_start'), (34, 439545, 440727, 'INTS_start'),
+                            (34, 473363, 478545, 'INTS_start'), (34, 515636, 518636, 'INTS_start'),
+                            (35, 214080, 216580, 'INTS_start')]
+
+# unsuccessful_intention = [(2, 386160, 388520, 'INTS_start'), (3, 202950, 204750, 'INTS_start'),
+#                           (3, 208510, 211840, 'INTS_start'),
+#                           (3, 371673, 372980, 'INTS_continue'), (4, 42000, 46320, 'INTS_continue'),
+#                           (4, 111633, 115986, 'INTS_start'),
+#                           (4, 127933, 129653, 'INTS_start'), (4, 175846, 178086, 'INTS_continue'),
+#                           (4, 250906, 254353, 'INTS_continue'),
+#                           (4, 263833, 267353, 'INTS_continue'), (4, 284286, 286060, 'INTS_continue'),
+#                           (4, 295220, 298173, 'INTS_continue'),
+#                           (4, 310566, 311986, 'INTS_continue'), (4, 428740, 429906, 'INTS_start'),
+#                           (4, 454213, 456400, 'INTS_start'),
+#                           (4, 461800, 464920, 'INTS_start'), (7, 260780, 261773, 'INTS_maybe'),
+#                           (7, 573726, 576053, 'INTS_start'),
+#                           (10, 298766, 302260, 'INTS_continue'), (10, 327113, 327926, 'INTS_start'),
+#                           (11, 200620, 202100, 'INTS_start'),
+#                           (11, 265993, 268886, 'INTS_continue'), (11, 453580, 455440, 'INTS_continue'),
+#                           (11, 504746, 506253, 'INTS_start'),
+#                           (11, 569646, 572020, 'INTS_start'), (11, 584906, 586813, 'INTS_continue'),
+#                           (17, 126940, 128820, 'INTS_start'),
+#                           (17, 419506, 421513, 'INTS_maybe'), (17, 447546, 451213, 'INTS_continue'),
+#                           (22, 270433, 272220, 'INTS_continue'),
+#                           (22, 320566, 321906, 'INTS_continue'), (22, 356313, 358780, 'INTS_start'),
+#                           (22, 532260, 534773, 'INTS_continue'),
+#                           (22, 555600, 556740, 'INTS_start'), (23, 371340, 374440, 'INTS_start'),
+#                           (27, 169253, 170973, 'INTS_continue'),
+#                           (27, 260046, 262333, 'INTS_maybe'), (34, 423106, 424286, 'INTS_start'),
+#                           (34, 425030, 426220, 'INTS_start'),
+#                           (34, 431330, 432480, 'INTS_start'), (34, 439420, 440633, 'INTS_start'),
+#                           (34, 477426, 479106, 'INTS_start'),
+#                           (34, 513746, 515126, 'INTS_continue'), (35, 378093, 379920, 'INTS_continue'),
+#                           (5, 412920, 414420, 'INTS_maybe')]
+
 
 # produce VAD
 
@@ -829,7 +858,6 @@ def genrate_all(windowSize, ratio, number_of_experiment, vad_dict):
 
 
             all_test_samples = successful_test_sample + unsuccessful_positive_sample + unsuccessful_negative_sample
-            print(type(all_test_samples))
             np.random.shuffle(all_test_samples)
 
             # For unsuccessful case, ground truth for both start and continue samples.
@@ -888,18 +916,19 @@ if __name__ == '__main__':
                     then need to indicate (start, continue, or all_unsuccessful) category.
     """
 
-    for window_size in range(1,4):
-        # generate training samples.
-        main(0, window_size, 20, vad_dict)
-
+    # TODO: currently only one experiment is ran for saving the time. Add more experiments later on.
+    for window_size in range(1,5):
+        # # generate training samples.
+        # main(0, window_size, 20, vad_dict)
+        #
         # experiment 1  done
         # generate training dataset
         main(1, window_size, 20, vad_dict, 100)
-
-
-        # experiment 2 (only changes the timewindow (2nd para) and ratio (3rd para))
-        # generate testing dataset for successful intention case.
-        main(2, window_size, 20, vad_dict, 100)
+        #
+        #
+        # # experiment 2 (only changes the timewindow (2nd para) and ratio (3rd para))
+        # # generate testing dataset for successful intention case.
+        # main(2, window_size, 20, vad_dict, 100)
 
         # experiment 3 done
         main(3, window_size, 20, vad_dict, 100, 'all_unsuccessful') # start/continue/all_unsuccessful

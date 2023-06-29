@@ -17,19 +17,22 @@ class SegmentationFusionModel(torch.nn.Module):
 
         self.modalities = modalities
 
-        if 'accel' in modalities:
-            self.accel_feature_extractor = AccelModelBodyNoPool(c_in=3)
-            self.accel_head = AccelSegmentationhead(c_out=1, output_len=mask_len)
+        # if 'accel' in modalities:
+        #     self.accel_feature_extractor = AccelModelBodyNoPool(c_in=3)
+        #     self.accel_head = AccelSegmentationhead(c_out=1, output_len=mask_len)
+        if 'poses' in modalities:
+            self.pose_feature_extractor = AccelModelBodyNoPool(c_in=26)
+            self.pose_head = AccelSegmentationhead(c_out=1, output_len=mask_len)
 
     def forward(self, batch: dict):
         """
         """
         masks = []
-        if 'accel' in batch:
+        if 'poses' in batch:
 
-            f = self.accel_feature_extractor(batch['accel'])
+            f = self.pose_feature_extractor(batch['poses'])
 
-            u = self.accel_head(f)
+            u = self.pose_head(f)
 
 
 
