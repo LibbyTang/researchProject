@@ -19,7 +19,7 @@ class System(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.model = SegmentationFusionModel(modalities, mask_len=120)
+        self.model = SegmentationFusionModel(modalities, mask_len=30)
         self.loss_fn = {
             'classification':F.binary_cross_entropy_with_logits,
             'regression': F.mse_loss,

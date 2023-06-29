@@ -8,7 +8,7 @@ import torch
 
 import numpy as np
 
-from sklearn.model_selection import KFold, GroupKFold
+from sklearn.model_selection import StratifiedGroupKFold, GroupKFold
 from IPython.display import clear_output
 
 import lightning_lite as pl
@@ -271,21 +271,20 @@ def main(train, experiment_num, windowSize, numberOfExperiment):
 
 
 if __name__ == '__main__':
-    #train model
-    main(True, experiment_num=0, windowSize=4, numberOfExperiment=100)
+    # train model
+    # main(True, experiment_num=0, windowSize=1, numberOfExperiment=100)
     #
     # experiment 1 done
-    main(False, experiment_num=1, windowSize=4, numberOfExperiment=100)
+    main(False, experiment_num=1, windowSize=1, numberOfExperiment=100)
     #
     # experiment 2 done
-    main(False, experiment_num=2, windowSize=4, numberOfExperiment=100)
+    # main(False, experiment_num=2, windowSize=1, numberOfExperiment=100)
 
     # experiment 3
-    main(False, experiment_num=3, windowSize=4, numberOfExperiment=100)
+    main(False, experiment_num=3, windowSize=1, numberOfExperiment=100)
 
     # experiment 4
-    main(False, experiment_num=4, windowSize=4, numberOfExperiment=100)
+    main(False, experiment_num=4, windowSize=1, numberOfExperiment=100)
 
     # experiment 5
-    main(False, experiment_num=5, windowSize=4, numberOfExperiment=100)
-
+    main(False, experiment_num=5, windowSize=1, numberOfExperiment=100)

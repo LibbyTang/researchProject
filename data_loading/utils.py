@@ -48,9 +48,10 @@ Generate information for example.pkl file
 
 
 class Maker():
-    def __init__(self, tracks_path=None, accel_path=None, vad_path=None, unsuccessful_vad_path=None,
+    def __init__(self, tracks_path2=None, tracks_path3=None, accel_path=None, vad_path=None, unsuccessful_vad_path=None,
                  all_sample_path=None):
-        self.tracks = pickle.load(open(tracks_path, "rb"))
+        self.tracks_cam2 = pickle.load(open(tracks_path2, "rb"))
+        self.tracks_cam3 = pickle.load(open(tracks_path3, "rb"))
 
         self.accel = {}
         if accel_path is not None:
@@ -159,13 +160,14 @@ class Maker():
 
         examples = [item for sublist in examples for item in sublist]
         self.examples = examples
-        print(len(examples))
+        print("training: ", len(examples))
 
         return examples
 
     # General template for making examples for a participant
     # (i indicate the pid for the current participant)
     def make_examples(self, i, example_id, csv_file, feature_fs, vad_function):
+        # print("=========== Person", i, " ============")
         examples = []
         time_window_list = []
 
@@ -177,17 +179,27 @@ class Maker():
                     # Add the time segment (as second) sample of the participant
                     time_window_list.append(tuple([int(line[0]), int(line[1])]))
 
-        track_list = []
+        # Tracks in camera 2
+        track_list2 = []
 
-        # Iterate through all the tracks, find the track that belongs to the current participant
-        for _, track in enumerate(self.tracks):
+        # Tracks in camera 3
+        track_list3 = []
+
+        # Iterate through the tracks in camera 2, find the track that belongs to the current participant
+        for _, track in enumerate(self.tracks_cam2):
             if i == track['pid']:
-                track_list.append(track)
+                track_list2.append(track)
+
+        # Iterate through the tracks in camera 3, find the track that belongs to the current participant
+        for _, track in enumerate(self.tracks_cam3):
+            if i == track['pid']:
+                track_list3.append(track)
+
 
         # Iterate through all the time segment samples
         for j in range(0, len(time_window_list)):
-            # The participant does not have a track in the current camera
-            if not track_list:
+            # The participant does not have a track neither camera
+            if not track_list2 and not track_list3:
                 break
 
             ini_time = time_window_list[j][0]
@@ -199,42 +211,90 @@ class Maker():
             int_frame = ini_time * feature_fs
             end_frame = end_time * feature_fs
 
-            # Iterate through all the tracks of the participant to find the one with the correct time period.
-            for participant_track in track_list:
-
+            poses_segment_cam2 = []
+            # Iterate through all the tracks of the participant in camera 2 to find the one with the correct time
+            # period.
+            for participant_track in track_list2:
                 # Check if the time interval has poses, if one endpoint is out of bound, discard this sample.
                 ini = participant_track['ini']
                 poses = participant_track['poses']
 
-                # if (np.count_nonzero(interp_vad == 1) > 0):
-                #     print("pid:", i)
-                #     print("Pose time period:")
-                #     print(ini)
-                #     print(ini + len(poses))
-                #     print("-----")
-                #     print("Annotation time segment:")
-                #     print(int_frame)
-                #     print(end_frame)
-                #     print("===")
-
                 if (int_frame > ini) and (end_frame < ini + len(poses)):
                     # Extract the corresponding pose segements from the given time segment
-                    poses_segment = poses[ini_time * feature_fs - ini + 1: end_time * feature_fs - ini + 1, :]
+                    poses_segment_cam2 = poses[ini_time * feature_fs - ini + 1: end_time * feature_fs - ini + 1, :]
+            poses_segment_cam3 = []
+            # Iterate through all the tracks of the participant in camera 3 to find the one with the correct time
+            # period.
+            for participant_track in track_list3:
+                # Check if the time interval has poses, if one endpoint is out of bound, discard this sample.
+                ini = participant_track['ini']
+                poses = participant_track['poses']
 
-                    # Only get x and y of the poses
-                    poses_segment_26 = np.array([[x for i, x in enumerate(sublist) if (i + 1) % 3 != 0] for sublist in
-                                        poses_segment])
+                if (int_frame > ini) and (end_frame < ini + len(poses)):
+                    # Extract the corresponding pose segments from the given time segment
+                    poses_segment_cam3 = poses[ini_time * feature_fs - ini + 1: end_time * feature_fs - ini + 1, :]
 
-                    examples.append({
-                        'id': example_id,
-                        'pid': i,
-                        'ini_time': ini_time,
-                        'end_time': end_time,
-                        # data
-                        'poses': poses_segment_26.transpose().astype(np.float32),
-                        'vad': interp_vad
-                    })
-                    example_id += 1
+            poses_segment = []
+            if poses_segment_cam2 == [] and poses_segment_cam3 == []:
+                # print("There are some tracks in cam2 or cam3 of this person but none of them are in the range of the "
+                #       "current time segment sample")
+                continue
+            elif poses_segment_cam2 == []:
+                # print("Tracks in camera 2 of this person are not in the range of the current time segment sample")
+                poses_segment = poses_segment_cam3
+            elif poses_segment_cam3 == []:
+                # print("Tracks in camera 3 of this person are not in the range of the current time segment sample")
+                poses_segment = poses_segment_cam2
+            else:
+                # print("Compare the confident values")
+                confidents2 = np.array([[x for i, x in enumerate(sublist) if (i + 1) % 3 == 0] for sublist in poses_segment_cam2])
+                confidents3 = np.array([[x for i, x in enumerate(sublist) if (i + 1) % 3 == 0] for sublist in poses_segment_cam3])
+
+                mean2 = np.mean(confidents2)
+                mean3 = np.mean(confidents3)
+                std2 = np.std(confidents2)
+                std3 = np.std(confidents3)
+
+                # Define the weights for mean and standard deviation
+                mean_weight = 0.6  # Adjust the weight as per your preference
+                std_weight = 0.4  # Adjust the weight as per your preference
+
+                # Calculate the composite score for each array
+                composite_score2 = (mean_weight * mean2) - (std_weight * std2)
+                composite_score3 = (mean_weight * mean3) - (std_weight * std3)
+
+                # Compare the composite scores
+                if composite_score2 < composite_score3:
+                    # print("confidents3 has a higher composite score.")
+                    # print("mean 2: ", mean2)
+                    # print("mean 3: ", mean3)
+                    # print("std 2: ", std2)
+                    # print("std 3: ", std3)
+
+                    poses_segment = poses_segment_cam3
+                else:
+                    # print("confidents2 has a higher composite score.")
+                    # print("mean 2: ", mean2)
+                    # print("mean 3: ", mean3)
+                    # print("std 2: ", std2)
+                    # print("std 3: ", std2)
+
+                    poses_segment = poses_segment_cam2
+
+            # Only get x and y of the poses
+            poses_segment_26 = np.array([[x for i, x in enumerate(sublist) if (i + 1) % 3 != 0] for sublist in
+                                         poses_segment])
+
+            examples.append({
+                'id': example_id,
+                'pid': i,
+                'ini_time': ini_time,
+                'end_time': end_time,
+                # data
+                'poses': poses_segment_26.transpose().astype(np.float32),
+                'vad': interp_vad
+            })
+            example_id += 1
 
         return examples, example_id
 
@@ -255,7 +315,7 @@ class Maker():
 
         test_examples = [item for sublist in test_examples for item in sublist]
         self.test_examples = test_examples
-        print(len(test_examples))
+        print("successful intention test: ", len(test_examples))
 
         return test_examples
 
@@ -276,7 +336,7 @@ class Maker():
 
         examples = [item for sublist in examples for item in sublist]
         self.all_samples = examples
-        print(len(examples))
+        print("all intention test: ", len(examples))
 
         return examples
 
@@ -302,7 +362,7 @@ class Maker():
 
         examples = [item for sublist in examples for item in sublist]
         self.unsuccessful_examples = examples
-        print(len(examples))
+        print("unsuccessful intention test: ", len(examples))
 
         return examples
 
