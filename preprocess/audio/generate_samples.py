@@ -19,8 +19,8 @@ vad_path = 'filter_vad/'
 
 # global variable
 pid_list = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]  # len = 13
-start_pid = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]
-# start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
+# start_pid = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]
+start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
 
 train_speech_total = 0
 train_silence_total = 0

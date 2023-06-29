@@ -92,8 +92,8 @@ class Maker():
             print('load_vad called but nothing loaded.')
 
     def load_unsuccessful_vad(self, unsuccessful_vad):
-        # start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
-        start_pid = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]
+        start_pid = [2, 3, 4, 7, 10, 11, 17, 22, 23, 34]
+        # start_pid = [2, 3, 4, 5, 7, 10, 11, 17, 22, 23, 27, 34, 35]
         for i in start_pid:
             fpath = os.path.join(unsuccessful_vad, f'{i}.csv')
             self.unsuccessful_vad[i] = pd.read_csv(fpath, header=None).to_numpy()
